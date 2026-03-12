@@ -143,8 +143,8 @@ require("commit-view").setup({
   commit_panel_height = 8,     -- lines
 
   icons = {
-    checked   = "",
-    unchecked = "",
+    checked   = "[x]",
+    unchecked = "[ ]",
     modified  = "M",
     added     = "A",
     deleted   = "D",

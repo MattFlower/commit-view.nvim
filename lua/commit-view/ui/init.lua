@@ -95,6 +95,8 @@ function M.configure_file_panel_win(win)
   vim.wo[win].spell = false
   vim.wo[win].cursorline = true
   vim.wo[win].winfixwidth = true
+  -- Prevent bufferline/tab clicks from replacing this panel's buffer
+  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 function M.configure_diff_win(win)
@@ -105,6 +107,7 @@ function M.configure_diff_win(win)
   vim.wo[win].wrap = false
   vim.wo[win].spell = false
   vim.wo[win].cursorline = true
+  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 function M.configure_commit_panel_win(win)
@@ -115,6 +118,7 @@ function M.configure_commit_panel_win(win)
   vim.wo[win].wrap = true
   vim.wo[win].spell = true
   vim.wo[win].winfixheight = true
+  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 --- Set up keymaps that work in all panels

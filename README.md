@@ -37,7 +37,7 @@ driven by keyboard shortcuts.
 
 ```lua
 {
-  "mflower/commit-view.nvim",
+  "MattFlower/commit-view.nvim",
   dependencies = {
     "MunifTanjim/nui.nvim",
     "nvim-lua/plenary.nvim",
@@ -55,7 +55,7 @@ driven by keyboard shortcuts.
 
 ```lua
 use {
-  "mflower/commit-view.nvim",
+  "MattFlower/commit-view.nvim",
   requires = {
     "MunifTanjim/nui.nvim",
     "nvim-lua/plenary.nvim",
@@ -106,7 +106,7 @@ vim.keymap.set("n", "<leader>gc", "<cmd>CommitView<cr>")
 
 | Key       | Action                     |
 |-----------|----------------------------|
-| `<Space>` | Toggle file selection      |
+| `<Space>` / `x` | Toggle file selection |
 | `<CR>`    | Open side-by-side diff     |
 | `l`       | Open side-by-side diff     |
 | `a`       | Select all files           |
@@ -162,8 +162,9 @@ require("commit-view").setup({
     cycle_panel_back = "<S-Tab>",
     help             = "?",
     -- file panel
-    toggle_select  = "<Space>",
-    open_diff      = "<CR>",
+    toggle_select     = "<Space>",
+    toggle_select_alt = "x",
+    open_diff         = "<CR>",
     open_diff_alt  = "l",
     select_all     = "a",
     deselect_all   = "u",

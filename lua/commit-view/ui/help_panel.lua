@@ -26,7 +26,7 @@ local function build_help_lines()
     "",
     " File Panel",
     " ──────────────────────────────────",
-    string.format("  %-14s  Toggle file selection", km.toggle_select),
+    string.format("  %-14s  Toggle file selection", km.toggle_select .. " / " .. (km.toggle_select_alt or "")),
     string.format("  %-14s  Open diff", km.open_diff),
     string.format("  %-14s  Select all files", km.select_all),
     string.format("  %-14s  Deselect all files", km.deselect_all),

@@ -28,6 +28,7 @@ M.defaults = {
     help = "?",
     -- File panel
     toggle_select = "<Space>",
+    toggle_select_alt = "x",
     open_diff = "<CR>",
     open_diff_alt = "l",
     select_all = "a",

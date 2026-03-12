@@ -90,7 +90,7 @@ local function setup_keymaps()
   end
 
   -- Toggle file selection
-  vim.keymap.set("n", cfg.keymaps.toggle_select, function()
+  local function toggle_selection()
     local node = tree:get_node()
     if not node then return end
 
@@ -108,7 +108,14 @@ local function setup_keymaps()
     end
 
     tree:render()
-  end, { buffer = buf, noremap = true, silent = true, desc = "Toggle selection" })
+  end
+
+  vim.keymap.set("n", cfg.keymaps.toggle_select, toggle_selection,
+    { buffer = buf, noremap = true, silent = true, desc = "Toggle selection" })
+  if cfg.keymaps.toggle_select_alt then
+    vim.keymap.set("n", cfg.keymaps.toggle_select_alt, toggle_selection,
+      { buffer = buf, noremap = true, silent = true, desc = "Toggle selection" })
+  end
 
   -- Expand/collapse section
   vim.keymap.set("n", cfg.keymaps.toggle_section, function()

@@ -64,10 +64,10 @@ end
 
 function M.set_files(files)
   state.files = files
-  -- Auto-select all changed files (not untracked) by default
+  -- Default all files to deselected
   for _, file in ipairs(files) do
     if state.selections[file.filepath] == nil then
-      state.selections[file.filepath] = (file.section ~= "untracked")
+      state.selections[file.filepath] = false
     end
   end
 end

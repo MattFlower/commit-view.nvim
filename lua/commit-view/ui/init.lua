@@ -95,8 +95,6 @@ function M.configure_file_panel_win(win)
   vim.wo[win].spell = false
   vim.wo[win].cursorline = true
   vim.wo[win].winfixwidth = true
-  -- Prevent bufferline/tab clicks from replacing this panel's buffer
-  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 function M.configure_diff_win(win)
@@ -107,7 +105,6 @@ function M.configure_diff_win(win)
   vim.wo[win].wrap = false
   vim.wo[win].spell = false
   vim.wo[win].cursorline = true
-  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 function M.configure_commit_panel_win(win)
@@ -118,7 +115,6 @@ function M.configure_commit_panel_win(win)
   vim.wo[win].wrap = true
   vim.wo[win].spell = true
   vim.wo[win].winfixheight = true
-  pcall(function() vim.wo[win].winfixbuf = true end)
 end
 
 --- Set up keymaps that work in all panels
@@ -224,8 +220,38 @@ function M.mount()
     keymaps.setup_commit_keymaps()
   end
 
+  -- Guard: silently restore the correct buffer if something (e.g. bufferline) swaps it out
+  local guard_group = vim.api.nvim_create_augroup("CommitViewWinGuard", { clear = true })
+  vim.api.nvim_create_autocmd("BufEnter", {
+    group = guard_group,
+    callback = function()
+      if not state.is_open() then return end
+      local cur_s = state.get()
+      local win = vim.api.nvim_get_current_win()
+      local buf = vim.api.nvim_win_get_buf(win)
+
+      -- Map each CommitView window to its expected buffer
+      local win_buf_map = {
+        [cur_s.wins.file_panel] = cur_s.bufs.file_panel,
+        [cur_s.wins.diff_old] = cur_s.bufs.diff_old,
+        [cur_s.wins.diff_new] = cur_s.bufs.diff_new,
+        [cur_s.wins.commit_panel] = cur_s.bufs.commit_panel,
+      }
+
+      local expected = win_buf_map[win]
+      if expected and buf ~= expected and vim.api.nvim_buf_is_valid(expected) then
+        vim.schedule(function()
+          if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(expected) then
+            vim.api.nvim_win_set_buf(win, expected)
+          end
+        end)
+      end
+    end,
+  })
+
   -- Set up autocmd to handle tab close
   vim.api.nvim_create_autocmd("TabClosed", {
+    group = guard_group,
     callback = function()
       if state.is_open() and not vim.api.nvim_win_is_valid(s.wins.file_panel or -1) then
         state.reset()

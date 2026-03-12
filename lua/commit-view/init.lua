@@ -58,8 +58,9 @@ function M.force_reset()
   if fp_ok and file_panel.reset then
     file_panel.reset()
   end
-  -- Clear scroll sync autocmds
+  -- Clear autocmd groups
   pcall(vim.api.nvim_del_augroup_by_name, "CommitViewScrollSync")
+  pcall(vim.api.nvim_del_augroup_by_name, "CommitViewWinGuard")
   state.reset()
 end
 

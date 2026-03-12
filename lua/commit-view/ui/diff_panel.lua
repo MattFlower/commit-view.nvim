@@ -115,20 +115,36 @@ function M.show_diff(filepath, section)
     vim.wo[win].foldlevel = 99  -- show all folds open
   end
 
-  -- Sync scroll on mouse wheel (scrollbind doesn't cover unfocused window scrolls)
+  -- Sync scroll when mouse wheel scrolls the unfocused diff pane.
+  -- scrollbind only syncs FROM the focused window, so mouse-wheeling the
+  -- non-focused pane causes it to snap back. Fix: update the focused pane
+  -- to match, then reset the scrollbind baseline with :syncbind.
   local group = vim.api.nvim_create_augroup("CommitViewScrollSync", { clear = true })
+  local syncing = false
   vim.api.nvim_create_autocmd("WinScrolled", {
     group = group,
     callback = function()
-      local scrolled_win = tonumber(vim.v.event.all[next(vim.v.event.all)] and next(vim.v.event.all))
-            or vim.api.nvim_get_current_win()
-      if scrolled_win == old_win or scrolled_win == new_win then
-        local target = scrolled_win == old_win and new_win or old_win
-        if vim.api.nvim_win_is_valid(scrolled_win) and vim.api.nvim_win_is_valid(target) then
-          local topline = vim.fn.getwininfo(scrolled_win)[1].topline
-          vim.api.nvim_win_call(target, function()
-            vim.fn.winrestview({ topline = topline })
-          end)
+      if syncing then return end
+      local focused = vim.api.nvim_get_current_win()
+
+      -- Check if an unfocused diff window was scrolled
+      for win_id_str, _ in pairs(vim.v.event) do
+        if win_id_str ~= "all" then
+          local win_id = tonumber(win_id_str)
+          if (win_id == old_win or win_id == new_win) and win_id ~= focused then
+            -- Unfocused diff pane was scrolled (mouse wheel)
+            local other = (win_id == old_win) and new_win or old_win
+            if vim.api.nvim_win_is_valid(win_id) and vim.api.nvim_win_is_valid(other) then
+              syncing = true
+              local topline = vim.fn.getwininfo(win_id)[1].topline
+              vim.api.nvim_win_call(other, function()
+                vim.fn.winrestview({ topline = topline })
+              end)
+              vim.cmd("syncbind")
+              vim.schedule(function() syncing = false end)
+            end
+            return
+          end
         end
       end
     end,

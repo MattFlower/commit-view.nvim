@@ -25,8 +25,16 @@ end
 ---@param name string buffer name for identification
 ---@return integer bufnr
 function M.create_scratch_buf(name)
+  local full_name = "commit-view://" .. name
+
+  -- Wipe any existing buffer with this name to avoid E95
+  local existing = vim.fn.bufnr(full_name)
+  if existing ~= -1 then
+    pcall(vim.api.nvim_buf_delete, existing, { force = true })
+  end
+
   local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(buf, "commit-view://" .. name)
+  vim.api.nvim_buf_set_name(buf, full_name)
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].bufhidden = "wipe"
   vim.bo[buf].swapfile = false

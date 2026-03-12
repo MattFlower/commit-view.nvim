@@ -91,30 +91,48 @@ local function setup_keymaps()
 
   -- Toggle file selection
   local function toggle_selection()
+    if not tree then
+      vim.notify("CommitView: tree not initialized", vim.log.levels.ERROR)
+      return
+    end
+
     local node = tree:get_node()
-    if not node then return end
+    if not node then
+      vim.notify("CommitView: no node at cursor", vim.log.levels.DEBUG)
+      return
+    end
 
     if node.is_section then
       -- Toggle all files in section
       local children = node:get_child_ids()
+      local count = 0
       for _, child_id in ipairs(children) do
         local child = tree:get_node(child_id)
         if child and child.is_file then
           state.toggle_selection(child.filepath)
+          count = count + 1
         end
       end
+      vim.notify(string.format("Toggled %d files in section", count))
     elseif node.is_file then
       state.toggle_selection(node.filepath)
+      local selected = state.is_selected(node.filepath)
+      vim.notify(
+        string.format("%s %s", selected and "Selected" or "Deselected", node.filepath)
+      )
     end
 
-    tree:render()
+    local ok, err = pcall(function() tree:render() end)
+    if not ok then
+      vim.notify("CommitView: render failed: " .. tostring(err), vim.log.levels.ERROR)
+    end
   end
 
   vim.keymap.set("n", cfg.keymaps.toggle_select, toggle_selection,
-    { buffer = buf, noremap = true, silent = true, desc = "Toggle selection" })
+    { buffer = buf, noremap = true, desc = "Toggle selection" })
   if cfg.keymaps.toggle_select_alt then
     vim.keymap.set("n", cfg.keymaps.toggle_select_alt, toggle_selection,
-      { buffer = buf, noremap = true, silent = true, desc = "Toggle selection" })
+      { buffer = buf, noremap = true, desc = "Toggle selection" })
   end
 
   -- Expand/collapse section

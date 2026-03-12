@@ -1,5 +1,4 @@
 local NuiTree = require("nui.tree")
-local NuiLine = require("nui.line")
 local state = require("commit-view.state")
 local config = require("commit-view.config")
 local render = require("commit-view.ui.render")
@@ -62,6 +61,32 @@ local function build_nodes()
   return root_nodes
 end
 
+--- Rebuild tree nodes in-place to force prepare_node re-evaluation.
+--- NuiTree may cache prepare_node output; set_nodes + render guarantees fresh rendering.
+local function rerender_tree()
+  if not tree then return end
+
+  -- Save cursor position
+  local cursor = vim.api.nvim_win_get_cursor(0)
+
+  local nodes = build_nodes()
+  tree:set_nodes(nodes)
+  -- Expand all sections
+  for _, node in ipairs(nodes) do
+    node:expand()
+  end
+  tree:render()
+
+  -- Restore cursor position (clamp to valid range)
+  local s = state.get()
+  local buf = s.bufs.file_panel
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    local row = math.min(cursor[1], line_count)
+    pcall(vim.api.nvim_win_set_cursor, 0, { row, cursor[2] })
+  end
+end
+
 --- Render a single tree node
 ---@param node NuiTree.Node
 ---@return NuiLine
@@ -91,41 +116,25 @@ local function setup_keymaps()
 
   -- Toggle file selection
   local function toggle_selection()
-    if not tree then
-      vim.notify("CommitView: tree not initialized", vim.log.levels.ERROR)
-      return
-    end
+    if not tree then return end
 
     local node = tree:get_node()
-    if not node then
-      vim.notify("CommitView: no node at cursor", vim.log.levels.DEBUG)
-      return
-    end
+    if not node then return end
 
     if node.is_section then
       -- Toggle all files in section
       local children = node:get_child_ids()
-      local count = 0
       for _, child_id in ipairs(children) do
         local child = tree:get_node(child_id)
         if child and child.is_file then
           state.toggle_selection(child.filepath)
-          count = count + 1
         end
       end
-      vim.notify(string.format("Toggled %d files in section", count))
     elseif node.is_file then
       state.toggle_selection(node.filepath)
-      local selected = state.is_selected(node.filepath)
-      vim.notify(
-        string.format("%s %s", selected and "Selected" or "Deselected", node.filepath)
-      )
     end
 
-    local ok, err = pcall(function() tree:render() end)
-    if not ok then
-      vim.notify("CommitView: render failed: " .. tostring(err), vim.log.levels.ERROR)
-    end
+    rerender_tree()
   end
 
   vim.keymap.set("n", cfg.keymaps.toggle_select, toggle_selection,
@@ -153,13 +162,13 @@ local function setup_keymaps()
   -- Select all
   vim.keymap.set("n", cfg.keymaps.select_all, function()
     state.select_all()
-    tree:render()
+    rerender_tree()
   end, { buffer = buf, noremap = true, silent = true, desc = "Select all" })
 
   -- Deselect all
   vim.keymap.set("n", cfg.keymaps.deselect_all, function()
     state.deselect_all()
-    tree:render()
+    rerender_tree()
   end, { buffer = buf, noremap = true, silent = true, desc = "Deselect all" })
 
   -- Open diff (Enter or l)
@@ -253,16 +262,7 @@ function M.refresh()
   end
 
   state.set_files(files)
-
-  if tree then
-    local nodes = build_nodes()
-    tree:set_nodes(nodes)
-    -- Expand all sections
-    for _, node in ipairs(nodes) do
-      node:expand()
-    end
-    tree:render()
-  end
+  rerender_tree()
 end
 
 --- Get the tree instance (for external use)

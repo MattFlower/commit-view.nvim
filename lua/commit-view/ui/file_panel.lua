@@ -264,6 +264,11 @@ function M.refresh()
   rerender_tree()
 end
 
+--- Reset module state so CommitView can be reopened cleanly
+function M.reset()
+  tree = nil
+end
+
 --- Get the tree instance (for external use)
 ---@return NuiTree|nil
 function M.get_tree()

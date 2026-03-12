@@ -35,26 +35,7 @@ function M.init()
     M.do_commit(true)
   end, vim.tbl_extend("force", opts, { desc = "Commit and push" }))
 
-  -- Make the buffer writable and set up for multi-line editing
-  vim.bo[buf].modifiable = true
-  vim.bo[buf].buftype = ""
-  vim.bo[buf].filetype = "gitcommit"
-
-  -- Pre-fill with empty lines so the commit area feels multi-line
-  local height = cfg.commit_panel_height or 8
-  local empty_lines = {}
-  for _ = 1, height do
-    table.insert(empty_lines, "")
-  end
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, empty_lines)
-
-  -- Place cursor at line 1
-  local win = s.wins.commit_panel
-  if win and vim.api.nvim_win_is_valid(win) then
-    vim.api.nvim_win_set_cursor(win, { 1, 0 })
-  end
-
-  -- Render action bar
+  -- Set initial placeholder and render action bar
   M.render_action_bar()
 end
 

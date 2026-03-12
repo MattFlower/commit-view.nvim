@@ -116,19 +116,12 @@ local function setup_keymaps()
 
   -- Toggle file selection
   local function toggle_selection()
-    if not tree then
-      vim.notify("[CV] toggle: no tree", vim.log.levels.WARN)
-      return
-    end
+    if not tree then return end
 
     local node = tree:get_node()
-    if not node then
-      vim.notify("[CV] toggle: no node at cursor", vim.log.levels.WARN)
-      return
-    end
+    if not node then return end
 
     if node.is_section then
-      -- Toggle all files in section
       local children = node:get_child_ids()
       for _, child_id in ipairs(children) do
         local child = tree:get_node(child_id)
@@ -136,14 +129,8 @@ local function setup_keymaps()
           state.toggle_selection(child.filepath)
         end
       end
-      vim.notify("[CV] toggled section")
     elseif node.is_file then
       state.toggle_selection(node.filepath)
-      vim.notify(string.format("[CV] %s -> %s",
-        node.filepath, state.is_selected(node.filepath) and "SELECTED" or "DESELECTED"))
-    else
-      vim.notify("[CV] toggle: node is neither section nor file", vim.log.levels.WARN)
-      return
     end
 
     rerender_tree()

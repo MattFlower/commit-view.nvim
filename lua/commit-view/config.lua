@@ -1,14 +1,18 @@
 local M = {}
 
+-- Detect Nerd Font availability via nvim-web-devicons
+local has_nerd_font = pcall(require, "nvim-web-devicons")
+
 M.defaults = {
   -- Width of the file panel as a fraction of the editor width
   file_panel_width = 0.25,
   -- Height of the commit panel in lines
   commit_panel_height = 8,
-  -- Icons
+  -- Icons (Nerd Font auto-detected via nvim-web-devicons, ASCII fallback)
   icons = {
-    checked = "[x]",
-    unchecked = "[ ]",
+    -- U+F046 nf-fa-check_square_o / U+F096 nf-fa-square_o
+    checked = has_nerd_font and vim.fn.nr2char(0xf046) or "[x]",
+    unchecked = has_nerd_font and vim.fn.nr2char(0xf096) or "[ ]",
     modified = "M",
     added = "A",
     deleted = "D",

@@ -115,6 +115,25 @@ function M.show_diff(filepath, section)
     vim.wo[win].foldlevel = 99  -- show all folds open
   end
 
+  -- Sync scroll on mouse wheel (scrollbind doesn't cover unfocused window scrolls)
+  local group = vim.api.nvim_create_augroup("CommitViewScrollSync", { clear = true })
+  vim.api.nvim_create_autocmd("WinScrolled", {
+    group = group,
+    callback = function()
+      local scrolled_win = tonumber(vim.v.event.all[next(vim.v.event.all)] and next(vim.v.event.all))
+            or vim.api.nvim_get_current_win()
+      if scrolled_win == old_win or scrolled_win == new_win then
+        local target = scrolled_win == old_win and new_win or old_win
+        if vim.api.nvim_win_is_valid(scrolled_win) and vim.api.nvim_win_is_valid(target) then
+          local topline = vim.fn.getwininfo(scrolled_win)[1].topline
+          vim.api.nvim_win_call(target, function()
+            vim.fn.winrestview({ topline = topline })
+          end)
+        end
+      end
+    end,
+  })
+
   -- Set up diff-panel specific keymaps
   M.setup_diff_keymaps(old_buf, new_buf, filepath, section)
 

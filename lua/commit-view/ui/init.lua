@@ -220,36 +220,8 @@ function M.mount()
     keymaps.setup_commit_keymaps()
   end
 
-  -- Guard: silently restore the correct buffer if something (e.g. bufferline) swaps it out
-  local guard_group = vim.api.nvim_create_augroup("CommitViewWinGuard", { clear = true })
-  vim.api.nvim_create_autocmd("BufEnter", {
-    group = guard_group,
-    callback = function()
-      if not state.is_open() then return end
-      local cur_s = state.get()
-      local win = vim.api.nvim_get_current_win()
-      local buf = vim.api.nvim_win_get_buf(win)
-
-      -- Map each CommitView window to its expected buffer
-      local win_buf_map = {
-        [cur_s.wins.file_panel] = cur_s.bufs.file_panel,
-        [cur_s.wins.diff_old] = cur_s.bufs.diff_old,
-        [cur_s.wins.diff_new] = cur_s.bufs.diff_new,
-        [cur_s.wins.commit_panel] = cur_s.bufs.commit_panel,
-      }
-
-      local expected = win_buf_map[win]
-      if expected and buf ~= expected and vim.api.nvim_buf_is_valid(expected) then
-        vim.schedule(function()
-          if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(expected) then
-            vim.api.nvim_win_set_buf(win, expected)
-          end
-        end)
-      end
-    end,
-  })
-
   -- Set up autocmd to handle tab close
+  local guard_group = vim.api.nvim_create_augroup("CommitViewWinGuard", { clear = true })
   vim.api.nvim_create_autocmd("TabClosed", {
     group = guard_group,
     callback = function()
@@ -275,8 +247,7 @@ function M.unmount()
       vim.cmd(t .. "tabnext")
       local win = vim.fn.tabpagewinnr(t)
       local buf = vim.fn.winbufnr(win)
-      local name = vim.api.nvim_buf_get_name(buf)
-      if name:find("commit%-view://") then
+      if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].commit_view then
         target_tab = t
         break
       end

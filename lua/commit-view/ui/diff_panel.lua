@@ -1,7 +1,6 @@
 local state = require("commit-view.state")
 local config = require("commit-view.config")
 local git_diff = require("commit-view.git.diff")
-local utils = require("commit-view.utils")
 
 local M = {}
 
@@ -99,9 +98,10 @@ function M.show_diff(filepath, section)
     set_buf_content(new_buf, new_lines or { "(cannot read file)" }, ft)
   end
 
-  -- Set buffer names for clarity in winbar/statusline
-  pcall(vim.api.nvim_buf_set_name, old_buf, "commit-view://diff-old/" .. filepath)
-  pcall(vim.api.nvim_buf_set_name, new_buf, "commit-view://diff-new/" .. filepath)
+  -- Store filepath in buffer variables for identification (no nvim_buf_set_name
+  -- to avoid ghost files on disk when Neovim exits)
+  vim.b[old_buf].commit_view_diff_file = filepath
+  vim.b[new_buf].commit_view_diff_file = filepath
 
   -- Enable diff mode on both windows
   enable_diff(old_win)
